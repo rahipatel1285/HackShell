@@ -1,7 +1,12 @@
 #!/bin/bash
 
-# HackShell v1.1 - Tools Interface
+# HackShell v1.2 Enhanced - Tools Interface
 # Created by Team ILLUSION || DK
+
+# Get script directory (tools/)
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+# Get project root (../)
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 
 # Colors
 green='\033[1;92m'
@@ -14,7 +19,7 @@ purple='\033[1;95m'
 reset='\033[0m'
 
 # Tool locations
-TOOLS_DIR="$HOME/HackShell/tools"
+TOOLS_DIR="$SCRIPT_DIR"
 NETWORK_TOOLS="$TOOLS_DIR/network.sh"
 SYSTEM_TOOLS="$TOOLS_DIR/system.sh"
 PACKAGE_TOOLS="$TOOLS_DIR/packages.sh"
@@ -115,10 +120,12 @@ main_menu() {
 
 # Install network tools
 install_network_tools() {
-    pkg install -y speedtest-cli nmap curl wget net-tools iproute2
+    if command -v pkg >/dev/null 2>&1; then
+        pkg install -y speedtest-cli nmap curl wget net-tools iproute2
+    fi
     
     # Create network tools script
-    cat > "$NETWORK_TOOLS" << 'EOF'
+    cat > "$NETWORK_TOOLS" << 'INNEREOF'
 #!/bin/bash
 
 # Colors
@@ -174,7 +181,11 @@ speed_test() {
     echo -e "${yellow}Running speed test...${reset}"
     echo -e "${yellow}This may take a minute...${reset}"
     echo ""
-    speedtest-cli --simple
+    if command -v speedtest-cli >/dev/null 2>&1; then
+        speedtest-cli --simple
+    else
+        echo -e "${red}speedtest-cli not found. Please install it.${reset}"
+    fi
     echo ""
     read -p "Press Enter to continue..."
 }
@@ -223,7 +234,11 @@ port_scan() {
     echo -e "${yellow}Scanning ports $range on $target...${reset}"
     echo -e "${yellow}This may take a while...${reset}"
     echo ""
-    nmap -p $range $target
+    if command -v nmap >/dev/null 2>&1; then
+        nmap -p $range $target
+    else
+        echo -e "${red}nmap not found. Please install it.${reset}"
+    fi
     echo ""
     read -p "Press Enter to continue..."
 }
@@ -267,7 +282,7 @@ network_status() {
 
 # Run main menu
 main_menu
-EOF
+INNEREOF
     
     chmod +x "$NETWORK_TOOLS"
     echo -e "${green}Network tools installed successfully!${reset}"
@@ -276,10 +291,12 @@ EOF
 
 # Install system tools
 install_system_tools() {
-    pkg install -y htop termux-api bc
+    if command -v pkg >/dev/null 2>&1; then
+        pkg install -y htop termux-api bc
+    fi
     
     # Create system tools script
-    cat > "$SYSTEM_TOOLS" << 'EOF'
+    cat > "$SYSTEM_TOOLS" << 'INNEREOF'
 #!/bin/bash
 
 # Colors
@@ -338,7 +355,11 @@ resource_usage() {
     echo -e "${yellow}Press q to quit${reset}"
     echo ""
     sleep 2
-    htop
+    if command -v htop >/dev/null 2>&1; then
+        htop
+    else
+        top
+    fi
 }
 
 # System info
@@ -359,13 +380,21 @@ system_info() {
     
     # Memory info
     echo -e "${cyan}Memory Information:${reset}"
-    free -h
+    if command -v free >/dev/null 2>&1; then
+        free -h
+    else
+        echo "Memory information not available"
+    fi
     
     echo ""
     
     # Storage info
     echo -e "${cyan}Storage Information:${reset}"
-    df -h
+    if command -v df >/dev/null 2>&1; then
+        df -h
+    else
+        echo "Storage information not available"
+    fi
     
     echo ""
     
@@ -438,21 +467,20 @@ battery_info() {
             # Check if bc is installed
             if command -v bc >/dev/null 2>&1; then
                 HEALTH_PERCENT=$(echo "scale=2; ($CHARGE_FULL/$CHARGE_DESIGN)*100" | bc)
+
+                echo -e "${cyan}Battery Health:${reset} ${HEALTH_PERCENT}%"
+
+                if (( $(echo "$HEALTH_PERCENT > 90" | bc -l) )); then
+                    echo -e "${green}Health Status: Excellent${reset}"
+                elif (( $(echo "$HEALTH_PERCENT > 80" | bc -l) )); then
+                    echo -e "${green}Health Status: Good${reset}"
+                elif (( $(echo "$HEALTH_PERCENT > 60" | bc -l) )); then
+                    echo -e "${yellow}Health Status: Fair${reset}"
+                else
+                    echo -e "${red}Health Status: Poor - Consider battery replacement${reset}"
+                fi
             else
                 echo "Cannot calculate health percentage (bc command not available)"
-                continue
-            fi
-            
-            echo -e "${cyan}Battery Health:${reset} ${HEALTH_PERCENT}%"
-            
-            if (( $(echo "$HEALTH_PERCENT > 90" | bc -l) )); then
-                echo -e "${green}Health Status: Excellent${reset}"
-            elif (( $(echo "$HEALTH_PERCENT > 80" | bc -l) )); then
-                echo -e "${green}Health Status: Good${reset}"
-            elif (( $(echo "$HEALTH_PERCENT > 60" | bc -l) )); then
-                echo -e "${yellow}Health Status: Fair${reset}"
-            else
-                echo -e "${red}Health Status: Poor - Consider battery replacement${reset}"
             fi
         else
             echo "Battery health information not available"
@@ -486,7 +514,11 @@ installed_packages() {
     echo ""
     
     echo -e "${cyan}Termux Packages:${reset}"
-    pkg list-installed
+    if command -v pkg >/dev/null 2>&1; then
+        pkg list-installed
+    else
+        echo "pkg command not found"
+    fi
     
     echo ""
     read -p "Press Enter to continue..."
@@ -502,10 +534,10 @@ storage_analysis() {
     df -h
     
     echo -e "\n${cyan}Largest Directories in Home:${reset}"
-    du -h -d 1 $HOME | sort -hr
+    du -h -d 1 $HOME 2>/dev/null | sort -hr
     
     echo -e "\n${cyan}Largest Files in Home (Top 10):${reset}"
-    find $HOME -type f -exec du -h {} \; | sort -hr | head -n 10
+    find $HOME -type f -exec du -h {} \; 2>/dev/null | sort -hr | head -n 10
     
     echo ""
     read -p "Press Enter to continue..."
@@ -513,7 +545,7 @@ storage_analysis() {
 
 # Run main menu
 main_menu
-EOF
+INNEREOF
     
     chmod +x "$SYSTEM_TOOLS"
     echo -e "${green}System monitor installed successfully!${reset}"
@@ -523,7 +555,7 @@ EOF
 # Install package tools
 install_package_tools() {
     # Create package tools script
-    cat > "$PACKAGE_TOOLS" << 'EOF'
+    cat > "$PACKAGE_TOOLS" << 'INNEREOF'
 #!/bin/bash
 
 # Colors
@@ -661,7 +693,7 @@ list_packages() {
 
 # Run main menu
 main_menu
-EOF
+INNEREOF
     
     chmod +x "$PACKAGE_TOOLS"
     echo -e "${green}Package manager installed successfully!${reset}"
@@ -670,10 +702,12 @@ EOF
 
 # Install file tools
 install_file_tools() {
-    pkg install -y ncdu ranger
+    if command -v pkg >/dev/null 2>&1; then
+        pkg install -y ncdu ranger
+    fi
     
     # Create file tools script
-    cat > "$FILE_TOOLS" << 'EOF'
+    cat > "$FILE_TOOLS" << 'INNEREOF'
 #!/bin/bash
 
 # Colors
@@ -860,7 +894,7 @@ file_operations() {
 
 # Run main menu
 main_menu
-EOF
+INNEREOF
     
     chmod +x "$FILE_TOOLS"
     echo -e "${green}File manager installed successfully!${reset}"

@@ -1,7 +1,10 @@
 #!/bin/bash
 
-# HackShell Configuration Script - v1.1
+# HackShell Configuration Script - v1.2 Enhanced
 # Created by Team ILLUSION || DK
+
+# Get script directory
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 # Colors
 green='\033[1;92m'
@@ -21,7 +24,7 @@ BANNER_STYLE="default"
 WELCOME_SOUND="true"
 
 # Config file path
-CONFIG_FILE="$HOME/HackShell/config.conf"
+CONFIG_FILE="$SCRIPT_DIR/config.conf"
 
 # Dependency checker
 check_dependencies() {
@@ -37,7 +40,7 @@ check_dependencies() {
     done
     
     # Check for required directories
-    if [ ! -d "$HOME/HackShell/themes" ]; then
+    if [ ! -d "$SCRIPT_DIR/themes" ]; then
         echo -e "${red}Error: Themes directory not found!${reset}"
         echo -e "${yellow}Please reinstall HackShell to fix this issue.${reset}"
         exit 1
@@ -170,7 +173,7 @@ show_progress() {
 # Backup system
 create_backup() {
     local backup_name="${1:-$(date +%Y%m%d_%H%M%S)}"
-    local backup_dir="$HOME/HackShell/backups"
+    local backup_dir="$SCRIPT_DIR/backups"
     
     # Create backup directory
     mkdir -p "$backup_dir"
@@ -180,7 +183,7 @@ create_backup() {
     # Create backup archive
     local backup_file="$backup_dir/hackshell_backup_$backup_name.tar.gz"
     
-    cd "$HOME/HackShell" || return 1
+    cd "$SCRIPT_DIR" || return 1
     
     tar -czf "$backup_file" \
         config.conf \
@@ -200,7 +203,7 @@ create_backup() {
 
 # Restore from backup
 restore_backup() {
-    local backup_dir="$HOME/HackShell/backups"
+    local backup_dir="$SCRIPT_DIR/backups"
     
     if [ ! -d "$backup_dir" ] || [ -z "$(ls -A $backup_dir)" ]; then
         echo -e "${red}No backups found!${reset}"
@@ -250,7 +253,7 @@ restore_backup() {
     
     show_progress "Restoring backup" 3
     
-    cd "$HOME/HackShell" || return 1
+    cd "$SCRIPT_DIR" || return 1
     
     if tar -xzf "$selected_backup"; then
         echo -e "${green}✓ Backup restored successfully!${reset}"
@@ -268,7 +271,7 @@ restore_backup() {
 display_header() {
     clear
     echo -e "${yellow}===============================================${reset}"
-    echo -e "${cyan}            HackShell v1.1 Config              ${reset}"
+    echo -e "${cyan}            HackShell v1.2 Config              ${reset}"
     echo -e "${yellow}===============================================${reset}"
     echo -e "${green}Created by Team ILLUSION || DK${reset}"
     echo ""
@@ -340,7 +343,7 @@ change_theme() {
     echo -e "Available Themes:"
     
     # Get all theme files
-    theme_files=("$HOME/HackShell/themes"/*.bashrc)
+    theme_files=("$SCRIPT_DIR/themes"/*.bashrc)
     
     # Built-in themes
     echo -e "${yellow}Built-in Themes:${reset}"
@@ -546,7 +549,7 @@ check_for_updates() {
     fi
     
     # Check if we're in a git repository
-    cd "$HOME/HackShell" || {
+    cd "$SCRIPT_DIR" || {
         echo -e "${red}HackShell directory not found!${reset}"
         sleep 3
         return
@@ -652,8 +655,8 @@ check_for_updates() {
 
 # Create custom theme
 create_custom_theme() {
-    if [ -f "$HOME/HackShell/tools/theme_wizard.sh" ]; then
-        bash "$HOME/HackShell/tools/theme_wizard.sh"
+    if [ -f "$SCRIPT_DIR/tools/theme_wizard.sh" ]; then
+        bash "$SCRIPT_DIR/tools/theme_wizard.sh"
     else
         echo -e "${red}Theme wizard not found!${reset}"
         echo -e "${yellow}Creating theme wizard...${reset}"
@@ -664,8 +667,8 @@ create_custom_theme() {
 
 # Manage themes
 manage_themes() {
-    if [ -f "$HOME/HackShell/themes/theme_manager.sh" ]; then
-        bash "$HOME/HackShell/themes/theme_manager.sh"
+    if [ -f "$SCRIPT_DIR/themes/theme_manager.sh" ]; then
+        bash "$SCRIPT_DIR/themes/theme_manager.sh"
     else
         echo -e "${red}Theme manager not found!${reset}"
         sleep 2
@@ -674,27 +677,27 @@ manage_themes() {
 
 # Launch tools
 launch_tools() {
-    if [ -f "$HOME/HackShell/tools/hacktools.sh" ]; then
-        bash "$HOME/HackShell/tools/hacktools.sh"
+    if [ -f "$SCRIPT_DIR/tools/hacktools.sh" ]; then
+        bash "$SCRIPT_DIR/tools/hacktools.sh"
     else
         echo -e "${red}Utility tools not found!${reset}"
         echo -e "${yellow}Installing...${reset}"
         
         # Create tools directory if it doesn't exist
-        if [ ! -d "$HOME/HackShell/tools" ]; then
-            mkdir -p "$HOME/HackShell/tools"
+        if [ ! -d "$SCRIPT_DIR/tools" ]; then
+            mkdir -p "$SCRIPT_DIR/tools"
         fi
         
         # Copy the tools script from the sample directory if available
-        if [ -f "$HOME/HackShell/samples/hacktools.sh" ]; then
-            cp "$HOME/HackShell/samples/hacktools.sh" "$HOME/HackShell/tools/hacktools.sh"
+        if [ -f "$SCRIPT_DIR/samples/hacktools.sh" ]; then
+            cp "$SCRIPT_DIR/samples/hacktools.sh" "$SCRIPT_DIR/tools/hacktools.sh"
         fi
         # Download or copy the tools script
-        cp "$HOME/HackShell/tools/hacktools.sh" "$HOME/HackShell/tools/hacktools.sh" 2>/dev/null
+        cp "$SCRIPT_DIR/tools/hacktools.sh" "$SCRIPT_DIR/tools/hacktools.sh" 2>/dev/null
         
-        if [ -f "$HOME/HackShell/tools/hacktools.sh" ]; then
-            chmod +x "$HOME/HackShell/tools/hacktools.sh"
-            bash "$HOME/HackShell/tools/hacktools.sh"
+        if [ -f "$SCRIPT_DIR/tools/hacktools.sh" ]; then
+            chmod +x "$SCRIPT_DIR/tools/hacktools.sh"
+            bash "$SCRIPT_DIR/tools/hacktools.sh"
         else
             echo -e "${red}Failed to install utility tools!${reset}"
             sleep 2
@@ -733,17 +736,34 @@ set_default_shell() {
     fi
     
     # Create or modify .bashrc to launch HackShell
-    cat > "$HOME/.bashrc" << 'EOF'
+    # Since install.sh replaces /data/data/com.termux/files/usr/etc/bash.bashrc,
+    # Termux will load HackShell theme by default.
+    # This feature might be intended to ensure it loads even if the global config is reset or changed.
+    # We will create a start.sh that sources the theme or config.
+
+    # Create start.sh if not exists
+    if [ ! -f "$SCRIPT_DIR/start.sh" ]; then
+        echo "#!/bin/bash" > "$SCRIPT_DIR/start.sh"
+        echo "# HackShell Startup Script" >> "$SCRIPT_DIR/start.sh"
+        echo "SCRIPT_DIR=\"\$( cd \"\$( dirname \"\${BASH_SOURCE[0]}\" )\" && pwd )\"" >> "$SCRIPT_DIR/start.sh"
+        echo "CONFIG_FILE=\"\$SCRIPT_DIR/config.conf\"" >> "$SCRIPT_DIR/start.sh"
+        echo "if [ -f \"\$CONFIG_FILE\" ]; then source \"\$CONFIG_FILE\"; else THEME=\"hacker\"; fi" >> "$SCRIPT_DIR/start.sh"
+        echo "THEME_FILE=\"\$SCRIPT_DIR/themes/\$THEME.bashrc\"" >> "$SCRIPT_DIR/start.sh"
+        echo "if [ -f \"\$THEME_FILE\" ]; then exec bash --rcfile \"\$THEME_FILE\"; else exec bash; fi" >> "$SCRIPT_DIR/start.sh"
+        chmod +x "$SCRIPT_DIR/start.sh"
+    fi
+
+    cat > "$HOME/.bashrc" << EOF
 #!/bin/bash
 
 # This file was modified by HackShell Installer
 
 # Launch HackShell
-if [ -d "$HOME/HackShell" ]; then
-    cd "$HOME/HackShell"
-    bash start.sh
+if [ -d "$SCRIPT_DIR" ]; then
+    cd "$SCRIPT_DIR"
+    exec bash start.sh
 else
-    echo "HackShell not found in $HOME/HackShell"
+    echo "HackShell not found in $SCRIPT_DIR"
     echo "Please reinstall HackShell"
 fi
 EOF
@@ -751,7 +771,7 @@ EOF
     chmod +x "$HOME/.bashrc"
     
     # Create script to restore original shell if needed
-    cat > "$HOME/HackShell/restore_shell.sh" << 'EOF'
+    cat > "$SCRIPT_DIR/restore_shell.sh" << 'EOF'
 #!/bin/bash
 
 # Colors
@@ -778,11 +798,11 @@ fi
 echo -e "${yellow}Please restart Termux to apply changes.${reset}"
 EOF
     
-    chmod +x "$HOME/HackShell/restore_shell.sh"
+    chmod +x "$SCRIPT_DIR/restore_shell.sh"
     
     echo -e "${green}HackShell has been set as your default shell!${reset}"
     echo -e "${yellow}To restore your original shell, run:${reset}"
-    echo -e "${cyan}bash $HOME/HackShell/restore_shell.sh${reset}"
+    echo -e "${cyan}bash $SCRIPT_DIR/restore_shell.sh${reset}"
     echo ""
     echo -e "${yellow}Please restart Termux to apply changes.${reset}"
     sleep 3
@@ -1282,7 +1302,7 @@ apply_changes() {
 # Function to generate bash.bashrc based on current config
 generate_bashrc() {
     # Copy the appropriate template based on theme
-    cp "$HOME/HackShell/themes/$THEME.bashrc" "$PREFIX/etc/bash.bashrc"
+    cp "$SCRIPT_DIR/themes/$THEME.bashrc" "$PREFIX/etc/bash.bashrc"
     
     # Modify bash.bashrc based on other settings
     if [ "$SHOW_SYSINFO" = "false" ]; then
